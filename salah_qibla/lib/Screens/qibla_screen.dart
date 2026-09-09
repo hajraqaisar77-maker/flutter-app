@@ -1000,12 +1000,12 @@ class _QiblaMapScreenState extends State<QiblaMapScreen> {
                     height: 54,
                     child: const _MeMarker(),
                   ),
-                  Marker(
+                  const Marker(
                     point: _kaaba,
                     width: 92,
                     height: 62,
                     alignment: Alignment.topCenter,
-                    child: const _KaabaMarker(),
+                    child: _KaabaMarker(),
                   ),
                 ],
               ),

@@ -9,7 +9,7 @@ class LocationService {
 
   // Get current position
   Future<Position> getCurrentPosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Future.error('Location services are disabled.');
     }
@@ -27,9 +27,13 @@ class LocationService {
     }
 
     try {
+      // geolocator 14 mein `desiredAccuracy`/`timeLimit` alag alag deni
+      // band ho gayi hain — ab dono `locationSettings` mein jati hain.
       _currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-        timeLimit: const Duration(seconds: 15),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 15),
+        ),
       );
       return _currentPosition!;
     } catch (e) {

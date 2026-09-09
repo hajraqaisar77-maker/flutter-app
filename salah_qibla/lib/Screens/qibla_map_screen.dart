@@ -54,7 +54,9 @@ class _QiblaMapScreenState extends State<QiblaMapScreen> {
       }
 
       final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+        ),
       );
 
       setState(() {

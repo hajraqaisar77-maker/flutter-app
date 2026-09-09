@@ -130,9 +130,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() {
-      _nextPrayer = nextName!;
+      _nextPrayer = nextName ?? '';
       _nextPrayerTime = DateFormat('HH:mm').format(next!);
-      _timeUntilNext = next!.difference(now);
+      _timeUntilNext = next.difference(now);
     });
   }
 
@@ -160,9 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours.remainder(24));
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    final String hours = twoDigits(duration.inHours.remainder(24));
+    final String minutes = twoDigits(duration.inMinutes.remainder(60));
+    final String seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
   }
 
@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('SalaH Now'),
         centerTitle: true,
-        backgroundColor: Color(0xFF1B5E20),
+        backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -209,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A5F2A).withOpacity(0.1),
+                            color: const Color(0xFF1A5F2A).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -276,15 +276,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             children: [
                               Text(
-                                _nextPrayer.isEmpty ? 'Maghrib' : _nextPrayer,
+                                _nextPrayer.isEmpty ? '--' : _nextPrayer,
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
                               ),
                               const SizedBox(height: 8),
+                              // Agli namaz ka apna waqt. Pehle yahan hamesha
+                              // Maghrib ka waqt lagta tha, chahe agli namaz
+                              // koi bhi ho.
                               Text(
-                                _prayerTimes?.maghrib ?? '--:--',
+                                _nextPrayerTime.isEmpty
+                                    ? '--:--'
+                                    : _nextPrayerTime,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 48,
@@ -308,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 20, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: const Text(

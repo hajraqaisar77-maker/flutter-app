@@ -44,20 +44,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     'ذی الحجہ'
   ];
 
-  final List<String> _hijriMonthsEnglish = [
-    'Muharram',
-    'Safar',
-    'Rabi al-Awwal',
-    'Rabi al-Thani',
-    'Jumada al-Awwal',
-    'Jumada al-Thani',
-    'Rajab',
-    'Sha\'ban',
-    'Ramadan',
-    'Shawwal',
-    'Dhul Qidah',
-    'Dhul Hijjah'
-  ];
 
   final List<String> _gregorianMonthsEnglish = [
     'January',

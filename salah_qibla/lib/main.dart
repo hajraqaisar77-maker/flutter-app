@@ -69,7 +69,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomeScreen(),
     const PrayerScreen(),
     const ExploreScreen(),
-    MessagesPage(),
+    const MessagesPage(),
     const MeScreen(),
   ];
 

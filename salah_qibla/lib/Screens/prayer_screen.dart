@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/prayer_provider.dart';
 import '../services/storage_service.dart';
-import '../models/prayer_model.dart';
 
 class PrayerScreen extends ConsumerStatefulWidget {
   const PrayerScreen({super.key});
@@ -110,7 +109,7 @@ class _PrayerScreenState extends ConsumerState<PrayerScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color:
-                  index == 0 ? const Color(0xFF0A2E29).withOpacity(0.05) : null,
+                  index == 0 ? const Color(0xFF0A2E29).withValues(alpha: 0.05) : null,
             ),
             child: Column(
               children: [
@@ -120,7 +119,7 @@ class _PrayerScreenState extends ConsumerState<PrayerScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0A2E29).withOpacity(0.1),
+                        color: const Color(0xFF0A2E29).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
