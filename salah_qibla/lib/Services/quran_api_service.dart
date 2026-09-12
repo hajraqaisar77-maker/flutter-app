@@ -20,10 +20,14 @@ class QuranApiService {
   /// nazar-andaz ho jayega.
   static const int _cacheVersion = 1;
 
+  // Lambi surahein (Al-Baqarah ki 286 aayaat, do editions ke saath) kaafi
+  // bara jawab banati hain, aur dheeme connection par 15 second mein wo
+  // shuru bhi nahi hota. Emulator par yehi `connectionTimeout` dekha gaya,
+  // is liye connect 30 aur receive 60 second kar diya.
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://api.alquran.cloud/v1',
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 25),
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 60),
   ));
 
   /// Surah ki aayaat `{'arabic': ..., 'urdu': ...}` ki shakl mein — wahi

@@ -185,8 +185,11 @@ class QuranScreen extends StatelessWidget {
   /// thi jabke wo 55 hai.
   final List<Map<String, String>> surahs = const [
     {'number': '1', 'name': 'Al-Fatihah', 'meaning': 'The Opening', 'verses': '7'},
+    {'number': '2', 'name': 'Al-Baqarah', 'meaning': 'The Cow', 'verses': '286'},
     {'number': '18', 'name': 'Al-Kahf', 'meaning': 'The Cave', 'verses': '110'},
     {'number': '24', 'name': 'An-Noor', 'meaning': 'The Light', 'verses': '64'},
+    {'number': '36', 'name': 'Yaseen', 'meaning': 'Ya Sin', 'verses': '83'},
+    {'number': '48', 'name': 'Al-Fath', 'meaning': 'The Victory', 'verses': '29'},
     {'number': '55', 'name': 'Ar-Rahman', 'meaning': 'The Most Gracious', 'verses': '78'},
     {'number': '67', 'name': 'Al-Mulk', 'meaning': 'The Dominion', 'verses': '30'},
     {'number': '106', 'name': 'Quraysh', 'meaning': 'Quraysh', 'verses': '4'},

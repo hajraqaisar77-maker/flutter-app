@@ -31,11 +31,14 @@ class SurahDetailScreen extends StatelessWidget {
   /// Jo surahein app ke andar likhi hui nahi, wo Quran API se aati hain.
   /// Key surah ka naam, value Quran mein uska number.
   ///
-  /// Al-Kahf ki 110 aayaat yahan hardcode nahi ki gayin — Quran ka matn
+  /// Ye lambi surahein yahan hardcode nahi ki gayin — Quran ka matn
   /// mustanad source se aana chahiye, aur ek dafa aa kar phone par
-  /// mehfooz ho jata hai.
+  /// mehfooz ho jata hai. Al-Baqarah akeli 286 aayaat ki hai.
   static const Map<String, int> _remoteSurahs = {
+    'Al-Baqarah': 2,
     'Al-Kahf': 18,
+    'Yaseen': 36,
+    'Al-Fath': 48,
   };
 
   @override
@@ -366,8 +369,11 @@ class SurahDetailScreen extends StatelessWidget {
   String _arabicName(String name) {
     const names = {
       'Al-Fatihah': 'الفاتحة',
+      'Al-Baqarah': 'البقرة',
       'Al-Kahf': 'الكهف',
       'An-Noor': 'النور',
+      'Yaseen': 'يس',
+      'Al-Fath': 'الفتح',
       'Al-Falaq': 'الفلق',
       'Quraysh': 'قريش',
       'Al-Kawthar': 'الكوثر',

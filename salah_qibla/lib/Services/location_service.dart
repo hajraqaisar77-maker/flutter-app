@@ -26,24 +26,44 @@ class LocationService {
       return Future.error('Location permissions are permanently denied');
     }
 
+    // Haal hi ka mehfooz location mil jaye to usi par kaam chala lete hain.
+    // Namaz ke auqaat shehar ki satah par tay hote hain — chand sau meter
+    // ka farq sirf seconds ka farq daalta hai. Is se app foran chal padti
+    // hai, GPS ke intezar mein atakti nahi.
+    final cached = await Geolocator.getLastKnownPosition();
+    if (cached != null && _isFresh(cached)) {
+      _currentPosition = cached;
+      return cached;
+    }
+
     try {
-      // geolocator 14 mein `desiredAccuracy`/`timeLimit` alag alag deni
-      // band ho gayi hain — ab dono `locationSettings` mein jati hain.
+      // geolocator 14 mein `desiredAccuracy`/`timeLimit` alag alag deni band
+      // ho gayi hain — ab dono `locationSettings` mein jati hain.
+      //
+      // Accuracy `best` se `medium` ki gayi: `best` satellite lock ka intezar
+      // karta hai jo ghar ke andar mushkil se milta hai, jabke `medium`
+      // wifi/network se foran mil jata hai aur auqaat ke liye kaafi hai.
       _currentPosition = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-          timeLimit: Duration(seconds: 15),
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 30),
         ),
       );
       return _currentPosition!;
     } catch (e) {
-      // Fresh GPS fix failed — fall back to last known position
-      final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null) {
-        _currentPosition = lastKnown;
-        return lastKnown;
+      // Naya fix na mile to purana hi chalega — koi bhi location na hone se
+      // behtar hai, warna prayer times aate hi nahi aur azaan set nahi hoti.
+      if (cached != null) {
+        _currentPosition = cached;
+        return cached;
       }
       return Future.error('Could not determine location: $e');
     }
+  }
+
+  /// Ek ghante se naya location "taza" samjha jata hai.
+  bool _isFresh(Position p) {
+    final age = DateTime.now().difference(p.timestamp);
+    return age.inMinutes.abs() <= 60;
   }
 }

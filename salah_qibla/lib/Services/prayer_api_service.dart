@@ -1,11 +1,15 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/prayer_model.dart';
 
 class PrayerApiService {
+  // Timeout 10 second tha, jo dheeme mobile data par kaafi nahi hota. Us
+  // soorat mein prayer times aate hi nahi the, aur unke baghair azaan ke
+  // alarms bhi set nahi hote the. 30 second se ye masla khatam ho jata hai.
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://api.aladhan.com/v1',
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
   ));
 
   Future<PrayerTimes> fetchPrayerTimes({
@@ -23,11 +27,6 @@ class PrayerApiService {
         },
       );
 
-      // DEBUG: raw response console mein print karein taake dekh sakein
-      // API se asal mein kya aa raha hai
-      // ignore: avoid_print
-      print('AZAAN_DEBUG raw response: ${response.data}');
-
       if (response.statusCode == 200) {
         return PrayerTimes.fromJson(response.data['data']);
       } else {
@@ -42,35 +41,47 @@ class PrayerApiService {
     required double latitude,
     required double longitude,
   }) async {
-    final List<PrayerTimes> weekly = [];
     final now = DateTime.now();
 
-    for (int i = 0; i < 7; i++) {
-      final date = now.add(Duration(days: i));
-      final dateString =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    // Saat din ek ke baad ek maangne se screen 7 x timeout tak atki rehti
+    // thi. Ab saaton request saath chalti hain, to kul waqt ek request ke
+    // barabar reh jata hai. Jo din nakaam ho wo chhoot jata hai, baqi aa
+    // jate hain — tarteeb bhi qaim rehti hai.
+    final results = await Future.wait(
+      List.generate(7, (i) {
+        final date = now.add(Duration(days: i));
+        final dateString =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        return _fetchForDate(dateString, latitude, longitude);
+      }),
+    );
 
-      try {
-        final response = await _dio.get(
-          '/timings/$dateString',
-          queryParameters: {
-            'latitude': latitude,
-            'longitude': longitude,
-            'method': 1, // University of Islamic Sciences, Karachi
-            'school': 1, // Hanafi Asr calculation
-          },
-        );
+    return results.whereType<PrayerTimes>().toList();
+  }
 
-        if (response.statusCode == 200) {
-          weekly.add(PrayerTimes.fromJson(response.data['data']));
-        }
-      } catch (e) {
-        // ignore: avoid_print
-        print('AZAAN_DEBUG weekly error for $dateString: $e');
-        continue;
+  Future<PrayerTimes?> _fetchForDate(
+    String dateString,
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final response = await _dio.get(
+        '/timings/$dateString',
+        queryParameters: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'method': 1, // University of Islamic Sciences, Karachi
+          'school': 1, // Hanafi Asr calculation
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return PrayerTimes.fromJson(response.data['data']);
       }
+    } catch (e) {
+      debugPrint('Prayer times $dateString ke liye nahi mile: $e');
     }
-    return weekly;
+    return null;
   }
 
   String getNextPrayer(PrayerTimes times) {
