@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart' show PlayerState;
 import 'package:flutter/material.dart';
 
 import '../services/quran_audio_service.dart';
 
 const Color _brandGreen = Color(0xFF1B5E20);
 
-/// Surah ki tilawat ka chhota player — screen ke neeche lagta hai.
+/// Surah ki tilawat ka player — screen ke neeche lagta hai.
 ///
-/// Tilawat online stream hoti hai, is liye pehli dafa chalne mein do-teen
-/// second lagte hain. Internet na ho to saaf paigham dikhata hai.
+/// Tilawat aayat ba aayat chalti hai (dekhiye [QuranAudioService]), is liye
+/// ek do second mein shuru ho jati hai. Har aayat khatam hote hi agli khud
+/// chal padti hai.
 class SurahAudioBar extends StatefulWidget {
   const SurahAudioBar({super.key, required this.surahNumber});
 
@@ -23,76 +23,50 @@ class SurahAudioBar extends StatefulWidget {
 class _SurahAudioBarState extends State<SurahAudioBar> {
   final QuranAudioService _audio = QuranAudioService();
 
-  StreamSubscription<PlayerState>? _stateSub;
-  StreamSubscription<Duration>? _posSub;
-  StreamSubscription<Duration>? _durSub;
-
-  bool _playing = false;
-  bool _loading = false;
-  String? _error;
-  Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
+  StreamSubscription<QuranAudioState>? _sub;
+  QuranAudioState _state = const QuranAudioState();
 
   @override
   void initState() {
     super.initState();
-
-    _stateSub = _audio.onStateChanged.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _playing = state == PlayerState.playing;
-        if (state == PlayerState.playing) _loading = false;
-        if (state == PlayerState.completed) _position = Duration.zero;
-      });
-    });
-
-    _posSub = _audio.onPositionChanged.listen((d) {
-      if (mounted) setState(() => _position = d);
-    });
-
-    _durSub = _audio.onDurationChanged.listen((d) {
-      if (mounted) setState(() => _duration = d);
+    _state = _audio.state;
+    _sub = _audio.onState.listen((s) {
+      if (mounted) setState(() => _state = s);
     });
   }
 
   @override
   void dispose() {
-    _stateSub?.cancel();
-    _posSub?.cancel();
-    _durSub?.cancel();
+    _sub?.cancel();
     // Screen chhorte hi tilawat band — warna peechhe bajti rehti hai.
     _audio.stop();
     super.dispose();
   }
 
+  /// Kya is screen ki surah hi baj rahi hai.
+  bool get _isMine => _state.surah == widget.surahNumber;
+
   Future<void> _toggle() async {
-    setState(() => _error = null);
-    try {
-      if (_playing) {
-        await _audio.pause();
-      } else {
-        setState(() => _loading = true);
-        await _audio.play(widget.surahNumber);
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'Tilawat nahi chal saki — internet check kijiye';
-      });
+    if (_isMine && _state.playing) {
+      await _audio.pause();
+    } else {
+      await _audio.play(widget.surahNumber);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final total = _duration.inMilliseconds;
-    final progress =
-        total > 0 ? (_position.inMilliseconds / total).clamp(0.0, 1.0) : 0.0;
+    final loading = _isMine && _state.loading;
+    final playing = _isMine && _state.playing;
+    final error = _isMine ? _state.error : null;
+    final count = _isMine ? _state.ayahCount : 0;
+    final index = _isMine ? _state.ayahIndex : 0;
+    final progress = count > 0 ? (index + 1) / count : 0.0;
 
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Colors.grey.shade300)),
@@ -100,44 +74,76 @@ class _SurahAudioBarState extends State<SurahAudioBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_error != null) ...[
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+            if (error != null) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  error,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              const SizedBox(height: 6),
             ],
             Row(
               children: [
+                // Play / pause / loading
                 SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: _loading
+                  width: 46,
+                  height: 46,
+                  child: loading
                       ? const Padding(
-                          padding: EdgeInsets.all(12),
+                          padding: EdgeInsets.all(11),
                           child: CircularProgressIndicator(
                               strokeWidth: 2.5, color: _brandGreen),
                         )
                       : IconButton(
                           onPressed: _toggle,
                           iconSize: 34,
+                          padding: EdgeInsets.zero,
                           color: _brandGreen,
-                          icon: Icon(_playing
+                          icon: Icon(playing
                               ? Icons.pause_circle_filled
                               : Icons.play_circle_fill),
                         ),
                 ),
-                const SizedBox(width: 4),
+
+                // Pichhli aayat
+                IconButton(
+                  onPressed: (count > 0 && index > 0) ? _audio.previous : null,
+                  iconSize: 22,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34),
+                  icon: const Icon(Icons.skip_previous),
+                  color: Colors.grey.shade700,
+                  tooltip: 'Pichhli aayat',
+                ),
+
+                // Agli aayat
+                IconButton(
+                  onPressed:
+                      (count > 0 && index < count - 1) ? _audio.next : null,
+                  iconSize: 22,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34),
+                  icon: const Icon(Icons.skip_next),
+                  color: Colors.grey.shade700,
+                  tooltip: 'Agli aayat',
+                ),
+
+                const SizedBox(width: 6),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _loading
+                        loading
                             ? 'Tilawat load ho rahi hai...'
                             : 'Tilawat — Mishary Alafasy',
                         style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600),
+                            fontSize: 12.5, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       LinearProgressIndicator(
@@ -149,26 +155,17 @@ class _SurahAudioBarState extends State<SurahAudioBar> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${QuranAudioService.formatDuration(_position)}'
-                        '  /  '
-                        '${total > 0 ? QuranAudioService.formatDuration(_duration) : "--:--"}',
+                        count > 0 ? 'Aayat ${index + 1} / $count' : 'Aayat --',
                         style: TextStyle(
                             fontSize: 11, color: Colors.grey.shade600),
                       ),
                     ],
                   ),
                 ),
-                if (_playing || _position > Duration.zero)
+
+                if (count > 0)
                   IconButton(
-                    onPressed: () async {
-                      await _audio.stop();
-                      if (mounted) {
-                        setState(() {
-                          _playing = false;
-                          _position = Duration.zero;
-                        });
-                      }
-                    },
+                    onPressed: _audio.stop,
                     icon: const Icon(Icons.stop_circle_outlined),
                     color: Colors.grey.shade600,
                     tooltip: 'Band karo',
